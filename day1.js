@@ -20,10 +20,10 @@ const getData = (part) => {
     const input = isBrowser
         ? document.body.innerText.trim()
         : sampleData[part - 1].sample;
-    const data = input.split("\n").map((a) => a.split("   "));
     const left = [];
     const right = [];
-    data.forEach(([l, r]) => {
+    input.split("\n").forEach((a) => {
+        const [l, r] = a.split("   ");
         left.push(Number(l));
         right.push(Number(r));
     });
