@@ -10,7 +10,7 @@ const part1Data = {
 
 const part2Data = {
     sample: part1Data.sample,
-    answer: 0,
+    answer: 31,
 };
 
 const sampleData = [part1Data, part2Data];
