@@ -28,6 +28,7 @@ const checkIsSafe = (report) => {
         report.every((level, idx) => idx === 0 || level < report[idx - 1]) ||
         report.every((level, idx) => idx === 0 || level > report[idx - 1]);
 
+    // check both if sequential and also diff is within limits
     return (
         isSequence &&
         report.every((level, idx) => {
@@ -45,10 +46,12 @@ const part1 = () => {
 };
 
 const checkIsSafe2 = (report) => {
+    // good to go
     const isSafe = checkIsSafe(report);
 
     if (isSafe) return true;
 
+    // try removing one item and see at least one looks good
     return report.some((_, idx) => {
         return checkIsSafe(report.toSpliced(idx, 1));
     });
