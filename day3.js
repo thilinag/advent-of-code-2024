@@ -15,29 +15,29 @@ const getData = (part) => {
     const input = isBrowser
         ? document.body.innerText.trim()
         : sampleData[part - 1].sample;
-    return input;
+    return input.replaceAll("\n", "");
 };
 
 const part1 = () => {
     const data = getData(1);
-    const real = [...data.matchAll(/mul\((\d+),(\d+)\)/g)].map(
-        ([_, first, second]) => [Number(first), Number(second)]
-    );
+    const real = [...data.matchAll(/mul\((\d+),(\d+)\)/g)] // find valid instruction pairs
+        .map(([_, X, Y]) => [Number(X), Number(Y)]);
     return real.reduce((acc, cur) => acc + cur[0] * cur[1], 0);
 };
 
 const part2 = () => {
     const data = getData(2);
-    const real = data
-        .split("do()") // get all instructions staring with do()
-        .map((a) => a.split(`don't()`)[0]) // remove instructions preceding don't()
-        .flatMap(
-            (a) =>
-                [...a.matchAll(/(mul\((\d+),(\d+)\))/g)].map((a) => [
-                    Number(a[2]),
-                    Number(a[3]),
-                ]) // get all valid mul pairs
-        );
+    // get instruction after do() but before don't()
+    // also get instructions till first don't and after last do()
+    const real = [
+        ...data.matchAll(/(?:do\(\)|^)(.*?)(?:don't\(\)|$)/g),
+    ].flatMap(([_, instructions]) =>
+        // find valid instruction pairs
+        [...instructions.matchAll(/mul\((\d+),(\d+)\)/g)].map(([_, X, Y]) => [
+            Number(X),
+            Number(Y),
+        ])
+    );
     return real.reduce((acc, cur) => acc + cur[0] * cur[1], 0);
 };
 
