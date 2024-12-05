@@ -67,12 +67,14 @@ const part1 = () => {
                 if (!rules.get(page)) return true;
 
                 const rule = rules.get(page);
+                // check if all rules pages come after the current page
                 return rule.every((rule) => {
                     const page2Idx = update.findIndex((page) => page === rule);
                     return idx < (page2Idx < 0 ? Infinity : page2Idx);
                 });
             })
         ) {
+            // add up middle page numbers
             sumOfMiddlePage += Number(update[Math.floor(update.length / 2)]);
         }
     });
@@ -87,6 +89,7 @@ const part2 = () => {
 
     updatesData.forEach((update) => {
         if (
+            // check at least one rule is broken
             update.some((page, idx) => {
                 if (!rules.get(page)) return false;
 
@@ -97,6 +100,7 @@ const part2 = () => {
                 });
             })
         ) {
+            // sort compare function puts a before b if return value is negative
             const correctOrder = update.toSorted((a, b) => {
                 if (rules.get(a) && rules.get(a).includes(b)) {
                     return -1;
@@ -104,6 +108,7 @@ const part2 = () => {
                 return 0;
             });
 
+            // add up middle page numbers
             sumOfMiddlePage += Number(
                 correctOrder[Math.floor(correctOrder.length / 2)]
             );
