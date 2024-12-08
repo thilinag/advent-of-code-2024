@@ -15,8 +15,8 @@ const part1Data = {
 };
 
 const part2Data = {
-    sample: ``,
-    answer: 0,
+    sample: part1Data.sample,
+    answer: 34,
 };
 
 const sampleData = [part1Data, part2Data];
@@ -91,9 +91,79 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    // const data = getData(2);
-    // part 2 code
-    // return ;
+    const data = getData(2);
+
+    const height = data.length;
+    const width = data[0].length;
+
+    // save all unique antennas as Map of antennaFrequency: positions[]
+    const antennas = new Map();
+    const antennaPositions = new Set();
+    for (let row = 0; row < height; row++) {
+        for (let col = 0; col < width; col++) {
+            if (data[row][col] === ".") {
+                continue;
+            }
+
+            antennas.set(data[row][col], [
+                ...(antennas.get(data[row][col]) ?? []),
+                [row, col],
+            ]);
+
+            antennaPositions.add(`${row},${col}`);
+        }
+    }
+
+    const antiNodePositions = new Set();
+
+    antennas.forEach((positions) => {
+        // for each antenna position,
+        positions.forEach(([pRow, pCol], idx) => {
+            if (idx < positions.length - 1) {
+                // loop through rest of the positions
+                positions.forEach(([rpRow, rpCol], restIdx) => {
+                    if (restIdx <= idx) {
+                        return;
+                    }
+
+                    const delta = [rpRow - pRow, rpCol - pCol];
+
+                    // find antiNodes towards both sides
+                    for (let i = 0; i < 2; i++) {
+                        let count = 1;
+
+                        // keep finding antiNodes
+                        while (true) {
+                            const nextRow =
+                                i == 0
+                                    ? pRow - delta[0] * count
+                                    : rpRow + delta[0] * count;
+
+                            const nextCol =
+                                i == 0
+                                    ? pCol - delta[1] * count
+                                    : rpCol + delta[1] * count;
+
+                            // stop while loop when antinode is outside of the map
+                            if (
+                                nextRow < 0 ||
+                                nextRow >= height ||
+                                nextCol < 0 ||
+                                nextCol >= width
+                            ) {
+                                break;
+                            }
+
+                            antiNodePositions.add(`${nextRow},${nextCol}`);
+                            count++;
+                        }
+                    }
+                });
+            }
+        });
+    });
+
+    return new Set([...antiNodePositions, ...antennaPositions]).size;
 };
 
 console.time("part1");
