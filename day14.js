@@ -82,9 +82,60 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    // const data = getData(2);
-    // part 2 code
-    // return ;
+    const data = getData(1);
+
+    const width = isBrowser ? 101 : 11;
+    const height = isBrowser ? 103 : 7;
+    let t = 1;
+
+    while (true) {
+        const matrix = Array.from({ length: height }, () =>
+            Array(width).fill(".")
+        );
+        const newPositions = data.map(([p, v]) => {
+            const [movedTotalX, movedTotalY] = [
+                p[0] + t * v[0],
+                p[1] + t * v[1],
+            ];
+            return [
+                [
+                    movedTotalX >= 0
+                        ? movedTotalX % height
+                        : (movedTotalX + movedTotalX * -1 * height) % height,
+                    movedTotalY >= 0
+                        ? movedTotalY % width
+                        : (movedTotalY + movedTotalY * -1 * width) % width,
+                ],
+                v,
+            ];
+        });
+
+        const uniquePositions = new Set(
+            newPositions.map(([[px, py]]) => `${px},${py}`)
+        );
+
+        // was checking when robots are in unique positions and breaking the
+        // while loop, first occurrence for my input was 1169 and that didnt have the tree
+        // second one had it!
+        const bad = [1169];
+        if (
+            !bad.includes(t) &&
+            Math.abs(uniquePositions.size - data.length) < 1
+        ) {
+            newPositions.forEach(([[x, y]]) => {
+                matrix[x][y] =
+                    matrix[x][y] === "." ? 1 : Number(matrix[x][y]) + 1;
+            });
+
+            matrix.forEach((row) => {
+                console.log(row.join(""));
+            });
+
+            console.log({ t });
+            break;
+        }
+        t++;
+    }
 };
 
 console.time("part1");
