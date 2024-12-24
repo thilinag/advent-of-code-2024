@@ -28,8 +28,8 @@ const part1Data = {
 };
 
 const part2Data = {
-    sample: ``,
-    answer: 0,
+    sample: part1Data.sample,
+    answer: "6,1",
 };
 
 const sampleData = [part1Data, part2Data];
@@ -48,6 +48,9 @@ const directions = [
     [1, 0],
     [0, -1],
 ];
+
+const size = isBrowser ? 71 : 7;
+const kilobytesLimit = isBrowser ? 1024 : 12;
 
 /* 
   https://en.wikipedia.org/wiki/Breadth-first_search
@@ -68,7 +71,7 @@ const directions = [
 const findPath = (matrix, start, end) => {
     const queue = [];
     const visited = new Map();
-    lowestScore = Infinity;
+    let lowestScore = Infinity;
 
     queue.push({
         pos: start,
@@ -125,29 +128,48 @@ const findPath = (matrix, start, end) => {
 
 const part1 = () => {
     const data = getData(1);
-    const size = isBrowser ? 71 : 7;
-    const kilobytesLimit = isBrowser ? 1024 : 12;
 
+    // generate memory space
     const memorySpace = Array.from({ length: size }, () =>
         Array(size).fill(".")
     );
 
+    // drop bytes with the mentioned limit
     for (let i = 0; i < kilobytesLimit; i++) {
-        if (data?.[i]) {
-            memorySpace[data[i][1]][data[i][0]] = "#";
-        }
+        memorySpace[data[i][1]][data[i][0]] = "#";
     }
 
     return findPath(memorySpace, [0, 0], [size - 1, size - 1]);
-
-    // part 1 code
-    // return ;
 };
 
 const part2 = () => {
     const data = getData(2);
-    // part 2 code
-    // return ;
+
+    // generate memory space
+    const memorySpace = Array.from({ length: size }, () =>
+        Array(size).fill(".")
+    );
+
+    // drop all bytes
+    for (let i = 0; i < data.length; i++) {
+        memorySpace[data[i][1]][data[i][0]] = "#";
+    }
+
+    let firstBadByte;
+
+    // try removing bytes from end till we find a path
+    for (let i = data.length - 1; i >= kilobytesLimit; i--) {
+        memorySpace[data[i][1]][data[i][0]] = ".";
+
+        const lowestScore = findPath(memorySpace, [0, 0], [size - 1, size - 1]);
+
+        if (lowestScore !== Infinity) {
+            firstBadByte = data[i];
+            break;
+        }
+    }
+
+    return firstBadByte;
 };
 
 console.time("part1");
