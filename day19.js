@@ -59,8 +59,35 @@ const part1 = () => {
     return possibleDesigns.size;
 };
 
+const findDesign2 = (design, towels, cache) => {
+    if (design === "") {
+        return 1;
+    }
+
+    if (cache.has(design)) {
+        return cache.get(design);
+    }
+
+    const configs = towels
+        .filter((towel) => design.startsWith(towel))
+        .reduce(
+            (acc, curTowel) =>
+                acc +
+                findDesign2(design.substr(curTowel.length), towels, cache),
+            0
+        );
+    cache.set(design, configs);
+    return configs;
+};
+
 const part2 = () => {
-    //
+    const { towels, designs } = getData(1);
+    let differentWays = 0;
+    designs.forEach((design) => {
+        differentWays += findDesign2(design, towels, new Map());
+    });
+
+    return differentWays;
 };
 
 console.time("part1");
