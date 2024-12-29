@@ -18,8 +18,8 @@ const part1Data = {
 };
 
 const part2Data = {
-    sample: ``,
-    answer: 0,
+    sample: part1Data.sample,
+    answer: 45,
 };
 
 const sampleData = [part1Data, part2Data];
@@ -58,6 +58,8 @@ const directions = [
 ];
 
 let currentDirection = [0, 1];
+let visited = new Map();
+let lowestPoints = Infinity;
 
 /* 
   https://en.wikipedia.org/wiki/Breadth-first_search
@@ -77,8 +79,6 @@ let currentDirection = [0, 1];
   */
 const findPath = (matrix, start, end, currentDir) => {
     const queue = [];
-    const visited = new Map();
-    let lowestPoints = Infinity;
 
     queue.push({
         pos: start,
@@ -121,9 +121,9 @@ const findPath = (matrix, start, end, currentDir) => {
             }
 
             // next points is too high
-            if (visited.get(`${nextRow},${nextCol}`) <= points + 1) {
-                return;
-            }
+            // if (visited.get(`${nextRow},${nextCol}`) <= points + 1) {
+            //     return;
+            // }
 
             // otherwise add to queue for checking next position
             // if we are turning score should be 1000 more
@@ -147,7 +147,51 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    const data = getData(2);
+    console.log({ visited: visited.size });
+    const { matrix, start, end } = getData(2);
+    const bestPaths = new Set();
+
+    const queue = [];
+    queue.push({ pos: end, points: lowestPoints });
+
+    while (queue.length) {
+        const {
+            pos: [row, col],
+            points,
+        } = queue.shift();
+        // console.log({ row, col, points });
+
+        bestPaths.add(`${row},${col}`);
+        directions.forEach(([dirX, dirY]) => {
+            const [nextRow, nextCol] = [row + dirX, col + dirY];
+
+            const savedNeighborData = visited.get(`${nextRow},${nextCol}`);
+
+            if (
+                row === 7 &&
+                col === 5 &&
+                (points - 1 === savedNeighborData ||
+                    points - 1001 === savedNeighborData)
+            ) {
+                console.log({ points, nextRow, nextCol, savedNeighborData });
+            }
+
+            if (savedNeighborData) {
+                if (
+                    points - 1 === savedNeighborData ||
+                    points - 1001 === savedNeighborData
+                ) {
+                    queue.push({
+                        pos: [nextRow, nextCol],
+                        points: savedNeighborData,
+                    });
+                }
+            }
+        });
+    }
+
+    console.log({ bestPaths: bestPaths.size });
+    // console.log({ bestPaths });
     // part 2 code
     // return ;
 };
