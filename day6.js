@@ -14,7 +14,7 @@ const part1Data = {
 
 const part2Data = {
     sample: part1Data.sample,
-    answer: 0,
+    answer: 6,
 };
 
 const sampleData = [part1Data, part2Data];
@@ -41,14 +41,15 @@ const directions = [
     [0, -1],
 ];
 
+const path = new Set();
+
 const patrol = (grid, row, col) => {
-    const visited = new Set();
     let nextPosition = [row, col];
     let direction = 0;
 
     while (grid?.[nextPosition[0]]?.[nextPosition[1]] !== undefined) {
         const prevPosition = nextPosition;
-        visited.add(`${nextPosition[0]}-${nextPosition[1]}`);
+        path.add(`${nextPosition[0]}-${nextPosition[1]}`);
 
         nextPosition = [
             nextPosition[0] + directions[direction][0],
@@ -63,7 +64,54 @@ const patrol = (grid, row, col) => {
         }
     }
 
-    return visited.size;
+    return path.size;
+};
+
+const patrol2 = (grid, row, col) => {
+    let loops = 0;
+    // check for all positions we found in part 1
+    // if they are an empty tile
+    path.forEach((position) => {
+        const [posX, posY] = position.split("-");
+        const visited = new Set();
+        let nextPosition = [row, col];
+        let direction = 0;
+
+        if (grid[posX][posY] === ".") {
+            // add a temporary obstacle
+            grid[posX][posY] = "#";
+
+            // patrol
+            while (grid?.[nextPosition[0]]?.[nextPosition[1]] !== undefined) {
+                const prevPosition = nextPosition;
+                const visitedKey = `${nextPosition[0]}-${nextPosition[1]}-${direction}`;
+
+                // if we have seen this be fore that means we are in a loop
+                if (visited.has(visitedKey)) {
+                    loops++;
+                    break;
+                }
+                visited.add(visitedKey);
+
+                nextPosition = [
+                    nextPosition[0] + directions[direction][0],
+                    nextPosition[1] + directions[direction][1],
+                ];
+
+                const nextValue = grid?.[nextPosition[0]]?.[nextPosition[1]];
+
+                if (nextValue === "#") {
+                    direction = (direction + 1) % 4;
+                    nextPosition = prevPosition;
+                }
+            }
+
+            // reset grid
+            grid[posX][posY] = ".";
+        }
+    });
+
+    return loops;
 };
 
 const part1 = () => {
@@ -73,9 +121,9 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    const data = getData(2);
-    // part 2 code
-    // return ;
+    const { grid, startRow, startCol } = getData(2);
+
+    return patrol2(grid, startRow, startCol);
 };
 
 console.time("part1");
