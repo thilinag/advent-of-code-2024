@@ -24,9 +24,19 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^`,
 };
 
 const part2Data = {
-    sample: ``,
+    sample: `#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+
+<v`,
     answer: 0,
 };
+
+// v<<^^<<^^
 
 const directions = [
     [-1, 0], // top
@@ -51,11 +61,15 @@ const getData = (part) => {
     };
 };
 
-const move = (row, col, warehouse, moves) => {
+const move = (row, col, warehouse, moves, part2 = false) => {
     let currentRow = row;
     let currentCol = col;
 
     while (moves.length) {
+        warehouse.forEach((row, rowIdx) => {
+            console.log(row.join(""));
+        });
+        console.log("");
         const move = moves.shift();
         const moveIdx = moveOrder.indexOf(move);
         const [nextRow, nextCol] = [
@@ -122,6 +136,54 @@ const move = (row, col, warehouse, moves) => {
             }
             continue;
         }
+
+        if (nextTile === "[" || nextTile === "]") {
+            // check if theres space for boxes to be pushed
+            let movableBoxes = [];
+
+            if (moveIdx === 1 || moveIdx === 3) {
+                while (true) {
+                    const next = [
+                        currentRow +
+                            (movableBoxes.length + 1) * directions[moveIdx][0],
+                        currentCol +
+                            (movableBoxes.length + 1) * directions[moveIdx][1],
+                    ];
+                    const nextBoxTile = warehouse?.[nextBoxRow]?.[nextBoxCol];
+
+                    // met a wall or out of bounds
+                    if (nextBoxTile === "#" || nextBoxTile === undefined) {
+                        movableBoxes = [];
+                        break;
+                    }
+
+                    // keep searching for an empty space
+                    if (nextBoxTile === "[" || nextBoxTile === "]") {
+                        movableBoxes.push([nextBoxRow, nextBoxCol]);
+                        continue;
+                    }
+
+                    // found an empty space, break out and do the moves
+                    if (nextBoxTile === ".") {
+                        movableBoxes.push([nextBoxRow, nextBoxCol]);
+                        break;
+                    }
+                }
+
+                if (movableBoxes.length) {
+                    // move boxes
+                    movableBoxes.forEach(([boxX, boxY]) => {
+                        warehouse[boxX][boxY] = "";
+                    });
+                    // update robot pos
+                    warehouse[currentRow][currentCol] = ".";
+                    warehouse[nextRow][nextCol] = "@";
+                    currentRow = nextRow;
+                    currentCol = nextCol;
+                }
+            }
+            continue;
+        }
     }
 };
 
@@ -150,20 +212,63 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    // const data = getData(2);
+    const { warehouse, moves } = getData(2);
+    const newWarehouse = [];
+
+    warehouse.forEach((row, rowIdx) => {
+        const line = [];
+        row.forEach((col, colIdx) => {
+            if (col === "#") {
+                line.push("#", "#");
+            }
+            if (col === ".") {
+                line.push(".", ".");
+            }
+            if (col === "O") {
+                line.push("[", "]");
+            }
+            if (col === "@") {
+                line.push("@", ".");
+            }
+        });
+        newWarehouse.push(line);
+    });
+
+    newWarehouse.forEach((row, rowIdx) => {
+        row.forEach((col, colIdx) => {
+            if (col === "@") {
+                move(rowIdx, colIdx, newWarehouse, moves, true);
+            }
+        });
+    });
+
+    let gpsSum = 0;
+
+    // newWarehouse.forEach((row, rowIdx) => {
+    //     console.log(row.join(""));
+    //     row.forEach((col, colIdx) => {
+    //         if (col === "O") {
+    //             gpsSum += 100 * rowIdx + colIdx;
+    //         }
+    //     });
+    // });
+    // return gpsSum;
+
+    // console.log(newWarehouse);
+
     // part 2 code
     // return ;
 };
 
-console.time("part1");
-const part1Answer = part1();
-console.log({ part1: part1Answer });
-console.timeEnd("part1");
-if (!isBrowser)
-    console.assert(
-        part1Answer === part1Data.answer,
-        `${part1Data.answer} expected.`
-    );
+// console.time("part1");
+// const part1Answer = part1();
+// console.log({ part1: part1Answer });
+// console.timeEnd("part1");
+// if (!isBrowser)
+//     console.assert(
+//         part1Answer === part1Data.answer,
+//         `${part1Data.answer} expected.`
+//     );
 
 console.time("part2");
 const part2Answer = part2();
