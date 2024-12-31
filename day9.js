@@ -5,8 +5,8 @@ const part1Data = {
 };
 
 const part2Data = {
-    sample: ``,
-    answer: 0,
+    sample: part1Data.sample,
+    answer: 2858,
 };
 
 const sampleData = [part1Data, part2Data];
@@ -78,8 +78,73 @@ const part1 = () => {
 
 const part2 = () => {
     const data = getData(2);
-    // part 2 code
-    // return ;
+    let fileSystem = [];
+    // filesystem data saved as a {file, length}[]
+    data.forEach((length, idx) => {
+        fileSystem.push({
+            file: idx % 2 === 0 ? idx / 2 : ".",
+            length,
+        });
+    });
+
+    while (true) {
+        const fileToMoveIdx = fileSystem.findLastIndex(
+            ({ file, checked = false }) => !checked && file !== "."
+        );
+
+        // we have no files to check means we are done
+        if (fileToMoveIdx < 0) {
+            break;
+        }
+
+        const { file: moveFile, length: moveLength } =
+            fileSystem[fileToMoveIdx];
+
+        const firstGapIdx = fileSystem.findIndex(
+            ({ file, length }, idx) =>
+                file === "." && moveLength <= length && idx < fileToMoveIdx
+        );
+
+        // if there is no suitable gap, skip to the next file
+        if (firstGapIdx < 0) {
+            fileSystem[fileToMoveIdx].checked = true;
+            continue;
+        }
+
+        // update gap
+        fileSystem[firstGapIdx].length =
+            fileSystem[firstGapIdx].length - moveLength;
+
+        // make original location empty
+        fileSystem[fileToMoveIdx].file = ".";
+
+        // move to gap
+        fileSystem.splice(firstGapIdx, 0, {
+            file: moveFile,
+            length: moveLength,
+            checked: true,
+        });
+
+        // draw fileSystem
+        // console.log(
+        //     fileSystem
+        //         .flatMap(({ file, length }) => Array(length).fill(file))
+        //         .join("")
+        // );
+    }
+
+    let checksum = 0;
+    let checksumId = 0;
+    fileSystem.forEach((item) => {
+        for (let i = 0; i < item.length; i++) {
+            if (item.file !== ".") {
+                checksum += checksumId * item.file;
+            }
+            checksumId++;
+        }
+    });
+
+    return checksum;
 };
 
 console.time("part1");
