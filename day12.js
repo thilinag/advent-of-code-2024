@@ -1,9 +1,15 @@
 const part1Data = {
-    sample: `EEEEE
-EXXXX
-EEEEE
-EXXXX
-EEEEE`,
+    sample: `RRRRIICCFF
+RRRRIICCCF
+VVRRRCCFFF
+VVRCCCJFFF
+VVVVCJJCFE
+VVIVCCJJEE
+VVIIICJJEE
+MIIIIIJJEE
+MIIISIJEEE
+MMMISSJEEE
+`,
     answer: 1930,
 };
 
@@ -32,27 +38,24 @@ const directions = [
 const getNeighbors = (matrix, row, col, visited, plotData) => {
     const neighbors = [];
     const plant = matrix[row][col];
-    for (let i = 0; i < 4; i++) {
-        const newRow = row + directions[i][0];
-        const newCol = col + directions[i][1];
+    directions.forEach(([dirX, dirY]) => {
+        const newRow = row + dirX;
+        const newCol = col + dirY;
 
         if (matrix?.[newRow]?.[newCol] === plant) {
             if (!visited.has(`${newRow},${newCol}`)) {
                 neighbors.push([newRow, newCol]);
             }
         } else {
-            // part 1
-            // plotData.edges.push(`${newRow},${newCol}`);
-            // part 2, save direction as well
-            plotData.edges.push(`${i}|${newRow},${newCol}`);
+            plotData.edges.push([newRow, newCol]);
         }
-    }
+    });
 
     return neighbors;
 };
 
 const findPlot = (matrix, row, col, visited, plotData) => {
-    plotData.area++;
+    plotData.area.push([row, col]);
     visited.add(`${row},${col}`);
 
     const neighbors = getNeighbors(matrix, row, col, visited, plotData);
@@ -74,17 +77,48 @@ const part1 = () => {
             if (!visited.has(`${rowIdx},${colIdx}`)) {
                 const plotData = {
                     plant: `${col}|${rowIdx},${colIdx}`,
-                    area: 0,
+                    area: [],
                     edges: [],
                 };
 
                 findPlot(data, rowIdx, colIdx, visited, plotData);
-                cost += plotData.area * plotData.edges.length;
+                cost += plotData.area.length * plotData.edges.length;
             }
         });
     });
 
     return cost;
+};
+
+const getStraightSide = (
+    matrix,
+    plant,
+    [x, y],
+    [dX, dY],
+    [dX1, dY1],
+    visited
+) => {
+    let nextX = x;
+    let nextY = y;
+
+    if (visited.has(`${nextX},${nextY}|${dX},${dY}`)) {
+        return null;
+    }
+    while (true) {
+        const tempNextX = nextX + dX;
+        const tempNextY = nextY + dY;
+        if (
+            matrix?.[tempNextX]?.[tempNextY] === plant &&
+            matrix?.[tempNextX + dX1]?.[tempNextY + dY1] !== plant
+        ) {
+            nextX = tempNextX;
+            nextY = tempNextY;
+            visited.add(`${nextX},${nextY}|${dX},${dY}`);
+        } else {
+            break;
+        }
+    }
+    return `${nextX},${nextY}|${dX},${dY}`;
 };
 
 const part2 = () => {
@@ -98,79 +132,35 @@ const part2 = () => {
             if (!visited.has(`${rowIdx},${colIdx}`)) {
                 const plotData = {
                     plant: `${col}|${rowIdx},${colIdx}`,
-                    area: 0,
+                    area: [],
                     edges: [],
                 };
 
                 findPlot(data, rowIdx, colIdx, visited, plotData);
 
-                // console.log(plotData.edges);
-                const topEdges = new Set();
-                const rightEdges = new Set();
-                const bottomEdges = new Set();
-                const leftEdges = new Set();
-
-                if (col === "E") {
-                    console.log(plotData.edges);
-                }
-                const corners = new Set();
-
-                plotData.edges.forEach((edge) => {
-                    const [edgeDirection, edgeCoords] = edge.split("|");
-                    // console.log({ edgeDirection });
-                    const [eR, eY] = edgeCoords.split(",");
-                    // console.log({ eR, eY });
-                    for (let i = 0; i < 4; i++) {
-                        const newRow = Number(eR) + directions[i][0];
-                        const newCol = Number(eY) + directions[i][1];
-
-                        const key = `${newRow},${newCol}`;
-                        console.log({ key });
-
-                        if (
-                            
-                        ) {
-                            corners.add(edgeCoords);
+                const sides = new Set();
+                const visitedPos = new Set();
+                plotData.area.forEach((pos) => {
+                    // check for straight sections
+                    // keep checking a specific direction till we run out of the edge
+                    // and save only the last pos as that edge
+                    directions.forEach((dir, dirIdx) => {
+                        const [dx, dy] = dir;
+                        if (data?.[pos[0] + dx]?.[pos[1] + dy] !== col) {
+                            const straightSide = getStraightSide(
+                                data,
+                                col,
+                                pos,
+                                directions[(dirIdx + 1) % 4],
+                                dir,
+                                visitedPos
+                            );
+                            if (straightSide) sides.add(straightSide);
                         }
-                    }
-
-                    // //top
-                    // if (edge.startsWith("0|")) {
-                    //     topEdges.add(edge.split("|")[1].split(",")[0]);
-                    // }
-                    // //right
-                    // if (edge.startsWith("1|")) {
-                    //     if (col === "E") {
-                    //         console.log(edge);
-                    //     }
-                    //     rightEdges.add(edge.split("|")[1].split(",")[1]);
-                    // }
-                    // //bottom
-                    // if (edge.startsWith("2|")) {
-                    //     bottomEdges.add(edge.split("|")[1].split(",")[0]);
-                    // }
-                    // //left
-                    // if (edge.startsWith("3|")) {
-                    //     leftEdges.add(edge.split("|")[1].split(",")[1]);
-                    // }
+                    });
                 });
 
-                console.log({ col, corners });
-
-                // console.log({
-                //     col,
-                //     topEdges,
-                //     rightEdges,
-                //     bottomEdges,
-                //     leftEdges,
-                // });
-
-                // cost +=
-                //     plotData.area *
-                //     (topEdges.size +
-                //         rightEdges.size +
-                //         bottomEdges.size +
-                //         leftEdges.size);
+                cost += plotData.area.length * sides.size;
             }
         });
     });
