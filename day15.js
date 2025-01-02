@@ -24,19 +24,9 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^`,
 };
 
 const part2Data = {
-    sample: `#######
-#...#.#
-#.....#
-#..OO@#
-#..O..#
-#.....#
-#######
-
-<v`,
-    answer: 0,
+    sample: part1Data.sample,
+    answer: 9021,
 };
-
-// v<<^^<<^^
 
 const directions = [
     [-1, 0], // top
@@ -61,15 +51,15 @@ const getData = (part) => {
     };
 };
 
-const move = (row, col, warehouse, moves, part2 = false) => {
+const move = (row, col, warehouse, moves) => {
     let currentRow = row;
     let currentCol = col;
 
     while (moves.length) {
-        warehouse.forEach((row, rowIdx) => {
-            console.log(row.join(""));
-        });
-        console.log("");
+        // warehouse.forEach((row, rowIdx) => {
+        //     console.log(row.join(""));
+        // });
+        // console.log("");
         const move = moves.shift();
         const moveIdx = moveOrder.indexOf(move);
         const [nextRow, nextCol] = [
@@ -136,54 +126,6 @@ const move = (row, col, warehouse, moves, part2 = false) => {
             }
             continue;
         }
-
-        if (nextTile === "[" || nextTile === "]") {
-            // check if theres space for boxes to be pushed
-            let movableBoxes = [];
-
-            if (moveIdx === 1 || moveIdx === 3) {
-                while (true) {
-                    const next = [
-                        currentRow +
-                            (movableBoxes.length + 1) * directions[moveIdx][0],
-                        currentCol +
-                            (movableBoxes.length + 1) * directions[moveIdx][1],
-                    ];
-                    const nextBoxTile = warehouse?.[nextBoxRow]?.[nextBoxCol];
-
-                    // met a wall or out of bounds
-                    if (nextBoxTile === "#" || nextBoxTile === undefined) {
-                        movableBoxes = [];
-                        break;
-                    }
-
-                    // keep searching for an empty space
-                    if (nextBoxTile === "[" || nextBoxTile === "]") {
-                        movableBoxes.push([nextBoxRow, nextBoxCol]);
-                        continue;
-                    }
-
-                    // found an empty space, break out and do the moves
-                    if (nextBoxTile === ".") {
-                        movableBoxes.push([nextBoxRow, nextBoxCol]);
-                        break;
-                    }
-                }
-
-                if (movableBoxes.length) {
-                    // move boxes
-                    movableBoxes.forEach(([boxX, boxY]) => {
-                        warehouse[boxX][boxY] = "";
-                    });
-                    // update robot pos
-                    warehouse[currentRow][currentCol] = ".";
-                    warehouse[nextRow][nextCol] = "@";
-                    currentRow = nextRow;
-                    currentCol = nextCol;
-                }
-            }
-            continue;
-        }
     }
 };
 
@@ -211,13 +153,158 @@ const part1 = () => {
     return gpsSum;
 };
 
+const move2 = (row, col, warehouse, moves) => {
+    let currentRow = row;
+    let currentCol = col;
+
+    while (moves.length) {
+        // console.log("");
+        const move = moves.shift();
+        const moveIdx = moveOrder.indexOf(move);
+        const [nextRow, nextCol] = [
+            currentRow + directions[moveIdx][0],
+            currentCol + directions[moveIdx][1],
+        ];
+        const nextTile = warehouse?.[nextRow]?.[nextCol];
+
+        if (nextTile === "#") {
+            continue;
+        }
+
+        if (nextTile === ".") {
+            // update robot pos
+            warehouse[currentRow][currentCol] = ".";
+            warehouse[nextRow][nextCol] = "@";
+            currentRow = nextRow;
+            currentCol = nextCol;
+            continue;
+        }
+
+        // horizontal
+        if (moveIdx === 1 || moveIdx === 3) {
+            // check if theres space for boxes to be pushed
+            let movableBoxes = [];
+
+            while (true) {
+                const [nextBoxRow, nextBoxCol] = [
+                    currentRow +
+                        (movableBoxes.length + 1) * directions[moveIdx][0],
+                    currentCol +
+                        (movableBoxes.length + 1) * directions[moveIdx][1],
+                ];
+                const nextBoxTile = warehouse?.[nextBoxRow]?.[nextBoxCol];
+
+                // met a wall or out of bounds
+                if (nextBoxTile === "#" || nextBoxTile === undefined) {
+                    movableBoxes = [];
+                    break;
+                }
+
+                // keep searching for an empty space it its [ or ]
+                if (nextBoxTile !== ".") {
+                    movableBoxes.push([
+                        nextBoxRow,
+                        nextBoxCol,
+                        warehouse[nextBoxRow][nextBoxCol],
+                    ]);
+                    continue;
+                }
+
+                // found an empty space, break out and do the moves
+                break;
+            }
+
+            if (movableBoxes.length) {
+                // move boxes
+                movableBoxes.forEach(([boxX, boxY, boxPart]) => {
+                    warehouse[boxX + directions[moveIdx][0]][
+                        boxY + directions[moveIdx][1]
+                    ] = boxPart;
+                });
+                // update robot pos
+                warehouse[currentRow][currentCol] = ".";
+                warehouse[nextRow][nextCol] = "@";
+                currentRow = nextRow;
+                currentCol = nextCol;
+            }
+            continue;
+        } else {
+            // vertical
+            let movableBoxes = [];
+            let toCheck = [
+                [nextRow, nextCol, nextTile],
+                nextTile === "["
+                    ? [nextRow, nextCol + 1, "]"]
+                    : [nextRow, nextCol - 1, "["],
+            ];
+            movableBoxes = [...toCheck];
+
+            while (true) {
+                const nextTiles = toCheck.map(([x, y]) => [
+                    x + directions[moveIdx][0],
+                    y + directions[moveIdx][1],
+                    warehouse?.[x + directions[moveIdx][0]]?.[
+                        y + directions[moveIdx][1]
+                    ],
+                ]);
+
+                // next spot is empty
+                if (nextTiles.every(([x, y, t]) => t === ".")) {
+                    break;
+                }
+
+                // next spot is blocked
+                if (nextTiles.some(([x, y, t]) => t === "#")) {
+                    movableBoxes = [];
+                    break;
+                }
+
+                //must be boxes, keep adding to check list
+                toCheck = [];
+                nextTiles.forEach(([x, y, t]) => {
+                    if (t === "]" || t === "[") {
+                        movableBoxes.push([x, y, t]);
+                    }
+                    // add the complete box
+                    if (t === "[") {
+                        movableBoxes.push([x, y + 1, "]"]);
+                        toCheck.push([x, y, t], [x, y + 1, "]"]);
+                    }
+
+                    if (t === "]") {
+                        movableBoxes.push([x, y - 1, "["]);
+                        toCheck.push([x, y, t], [x, y - 1, "["]);
+                    }
+                });
+            }
+            if (movableBoxes.length) {
+                // move boxes
+                movableBoxes
+                    .toSorted((a, b) => (moveIdx ? b[0] - a[0] : a[0] - b[0]))
+                    .forEach(([boxX, boxY, boxPart]) => {
+                        warehouse[boxX][boxY] = ".";
+                        warehouse[boxX + directions[moveIdx][0]][
+                            boxY + directions[moveIdx][1]
+                        ] = boxPart;
+                    });
+                // update robot pos
+                warehouse[currentRow][currentCol] = ".";
+                warehouse[nextRow][nextCol] = "@";
+                currentRow = nextRow;
+                currentCol = nextCol;
+            }
+            continue;
+        }
+    }
+};
+
 const part2 = () => {
     const { warehouse, moves } = getData(2);
     const newWarehouse = [];
 
-    warehouse.forEach((row, rowIdx) => {
+    warehouse.forEach((row) => {
         const line = [];
-        row.forEach((col, colIdx) => {
+        row.forEach((col) => {
             if (col === "#") {
                 line.push("#", "#");
             }
@@ -237,38 +324,33 @@ const part2 = () => {
     newWarehouse.forEach((row, rowIdx) => {
         row.forEach((col, colIdx) => {
             if (col === "@") {
-                move(rowIdx, colIdx, newWarehouse, moves, true);
+                move2(rowIdx, colIdx, newWarehouse, moves, true);
             }
         });
     });
 
     let gpsSum = 0;
 
-    // newWarehouse.forEach((row, rowIdx) => {
-    //     console.log(row.join(""));
-    //     row.forEach((col, colIdx) => {
-    //         if (col === "O") {
-    //             gpsSum += 100 * rowIdx + colIdx;
-    //         }
-    //     });
-    // });
-    // return gpsSum;
-
-    // console.log(newWarehouse);
-
-    // part 2 code
-    // return ;
+    newWarehouse.forEach((row, rowIdx) => {
+        console.log(row.join(""));
+        row.forEach((col, colIdx) => {
+            if (col === "[") {
+                gpsSum += 100 * rowIdx + colIdx;
+            }
+        });
+    });
+    return gpsSum;
 };
 
-// console.time("part1");
-// const part1Answer = part1();
-// console.log({ part1: part1Answer });
-// console.timeEnd("part1");
-// if (!isBrowser)
-//     console.assert(
-//         part1Answer === part1Data.answer,
-//         `${part1Data.answer} expected.`
-//     );
+console.time("part1");
+const part1Answer = part1();
+console.log({ part1: part1Answer });
+console.timeEnd("part1");
+if (!isBrowser)
+    console.assert(
+        part1Answer === part1Data.answer,
+        `${part1Data.answer} expected.`
+    );
 
 console.time("part2");
 const part2Answer = part2();
