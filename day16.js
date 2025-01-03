@@ -93,12 +93,16 @@ const findPath = (matrix, start, end, currentDir) => {
             currentDir,
         } = queue.shift();
 
-        if (!visited.get(`${row},${col}`)) {
-            visited.set(`${row},${col}`, Infinity);
+        const cacheKey = `${row},${col}`;
+
+        if (!visited.get(cacheKey)) {
+            visited.set(cacheKey, {
+                lowest: Infinity,
+            });
         }
 
         // skip if points is already too high
-        if (points >= visited.get(`${row},${col}`) || points >= lowestPoints) {
+        if (points >= visited.get(cacheKey).lowest || points >= lowestPoints) {
             continue;
         }
 
@@ -108,8 +112,14 @@ const findPath = (matrix, start, end, currentDir) => {
             continue;
         }
 
+        const savedData = visited.get(cacheKey);
+
         // update points
-        visited.set(`${row},${col}`, points);
+        visited.set(cacheKey, {
+            ...savedData,
+            [currentDir.toString()]: points,
+            lowest: Math.min(...Object.values(savedData)),
+        });
 
         // check next pos
         directions.forEach(([dirX, dirY]) => {
@@ -119,11 +129,6 @@ const findPath = (matrix, start, end, currentDir) => {
             if (matrix?.[nextRow]?.[nextCol] !== ".") {
                 return;
             }
-
-            // next points is too high
-            // if (visited.get(`${nextRow},${nextCol}`) <= points + 1) {
-            //     return;
-            // }
 
             // otherwise add to queue for checking next position
             // if we are turning score should be 1000 more
@@ -147,11 +152,11 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    console.log({ visited: visited.size });
-    const { matrix, start, end } = getData(2);
-    const bestPaths = new Set();
+    const { end } = getData(2);
+    const bestSpots = new Set();
 
     const queue = [];
+    // start from the end
     queue.push({ pos: end, points: lowestPoints });
 
     while (queue.length) {
@@ -159,41 +164,35 @@ const part2 = () => {
             pos: [row, col],
             points,
         } = queue.shift();
-        // console.log({ row, col, points });
 
-        bestPaths.add(`${row},${col}`);
+        bestSpots.add(`${row},${col}`);
+
+        // for each direction check if there is a tile which has the lowest score
+        // that means its also an alternative path to end
         directions.forEach(([dirX, dirY]) => {
             const [nextRow, nextCol] = [row + dirX, col + dirY];
 
             const savedNeighborData = visited.get(`${nextRow},${nextCol}`);
 
-            if (
-                row === 7 &&
-                col === 5 &&
-                (points - 1 === savedNeighborData ||
-                    points - 1001 === savedNeighborData)
-            ) {
-                console.log({ points, nextRow, nextCol, savedNeighborData });
-            }
-
             if (savedNeighborData) {
-                if (
-                    points - 1 === savedNeighborData ||
-                    points - 1001 === savedNeighborData
-                ) {
+                if (Object.values(savedNeighborData).includes(points - 1)) {
                     queue.push({
                         pos: [nextRow, nextCol],
-                        points: savedNeighborData,
+                        points: points - 1,
+                    });
+                }
+
+                if (Object.values(savedNeighborData).includes(points - 1001)) {
+                    queue.push({
+                        pos: [nextRow, nextCol],
+                        points: points - 1001,
                     });
                 }
             }
         });
     }
 
-    console.log({ bestPaths: bestPaths.size });
-    // console.log({ bestPaths });
-    // part 2 code
-    // return ;
+    return bestSpots.size;
 };
 
 console.time("part1");
