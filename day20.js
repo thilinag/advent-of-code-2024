@@ -18,8 +18,8 @@ const part1Data = {
 };
 
 const part2Data = {
-    sample: ``,
-    answer: 0,
+    sample: part1Data.sample,
+    answer: 285,
 };
 
 const sampleData = [part1Data, part2Data];
@@ -103,8 +103,8 @@ const race = (matrix, start, end, raceTrackInfo) => {
     }
 };
 
+const raceTrackInfo = new Map();
 const part1 = () => {
-    const raceTrackInfo = new Map();
     const { track, start, end } = getData(1);
     race(track, start, end, raceTrackInfo);
 
@@ -112,6 +112,7 @@ const part1 = () => {
     // apply cheat
     raceTrackInfo.forEach(({ row, col, picoseconds }) => {
         directions.forEach(([dirX, dirY]) => {
+            // skip a wall
             const [nextRow, nextCol] = [row + dirX * 2, col + dirY * 2];
             // picoseconds after cheating
             const positionWithCheat = raceTrackInfo.get(
@@ -131,9 +132,27 @@ const part1 = () => {
 };
 
 const part2 = () => {
-    // const data = getData(2);
-    // part 2 code
-    // return ;
+    let chatsBetterThan100 = 0;
+    // go through every track position with the other positions if disntace is less than 20
+    // also check if it saves more than 100 picoseconds with the difference
+    raceTrackInfo.forEach(({ row, col, picoseconds }) => {
+        raceTrackInfo.forEach(
+            ({ row: row2, col: col2, picoseconds: picoseconds2 }) => {
+                // https://en.wikipedia.org/wiki/Taxicab_geometry
+                const manhattanDiff =
+                    Math.abs(row - row2) + Math.abs(col - col2);
+
+                if (
+                    manhattanDiff <= 20 &&
+                    picoseconds2 - picoseconds >= 100 + manhattanDiff
+                ) {
+                    chatsBetterThan100++;
+                }
+            }
+        );
+    });
+
+    return chatsBetterThan100;
 };
 
 console.time("part1");
