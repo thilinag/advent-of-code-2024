@@ -108,7 +108,6 @@ const move = (row, col, warehouse, moves) => {
 
                 // found an empty space, break out and do the moves
                 if (nextBoxTile === ".") {
-                    movableBoxes.push([nextBoxRow, nextBoxCol]);
                     break;
                 }
             }
@@ -116,7 +115,9 @@ const move = (row, col, warehouse, moves) => {
             if (movableBoxes.length) {
                 // move boxes
                 movableBoxes.forEach(([boxX, boxY]) => {
-                    warehouse[boxX][boxY] = "O";
+                    warehouse[boxX + directions[moveIdx][0]][
+                        boxY + directions[moveIdx][1]
+                    ] = "O";
                 });
                 // update robot pos
                 warehouse[currentRow][currentCol] = ".";
